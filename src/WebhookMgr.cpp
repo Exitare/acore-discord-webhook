@@ -6,7 +6,6 @@
 #include "Chat.h"
 #include <csignal>
 
-
 WebhookMgr* WebhookMgr::instance()
 {
     static WebhookMgr instance;
@@ -81,7 +80,6 @@ void WebhookMgr::ProcessMessages()
 
     LOG_INFO("server.worldserver", "Webhook processor closed.");
 }
-
 
 void WebhookMgr::SendDiscordWebhook(const std::string& rawMessage)
 {
