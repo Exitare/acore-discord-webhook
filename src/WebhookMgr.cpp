@@ -13,11 +13,13 @@ WebhookMgr* WebhookMgr::instance()
     return &instance;
 }
 
-WebhookMgr::~WebhookMgr() {
+WebhookMgr::~WebhookMgr()
+{
     Stop(); // Ensure the worker thread is stopped
 }
 
-void WebhookMgr::ScheduleMessage(const std::string& rawMessage) {
+void WebhookMgr::ScheduleMessage(const std::string& rawMessage)
+{
     {
         std::lock_guard<std::mutex> lock(_queueMutex);
         _messageQueue.push(rawMessage);
@@ -25,35 +27,41 @@ void WebhookMgr::ScheduleMessage(const std::string& rawMessage) {
     _condition.notify_one(); // Notify the worker thread that a message is available
 }
 
-void WebhookMgr::Start() {
+void WebhookMgr::Start()
+{
     _stopWorker = false;
     _workerThread = std::thread(&WebhookMgr::ProcessMessages, this);
 }
 
-void WebhookMgr::Stop() {
+void WebhookMgr::Stop()
+{
     {
         std::lock_guard<std::mutex> lock(_queueMutex);
         _stopWorker = true; // Signal the thread to stop
     }
     _condition.notify_all(); // Wake up the thread if it’s waiting
 
-    if (_workerThread.joinable()) {
+    if (_workerThread.joinable())
+    {
         _workerThread.join(); // Wait for the thread to finish
     }
 }
 
-void WebhookMgr::ProcessMessages() {
+void WebhookMgr::ProcessMessages()
+{
     while (true) {
         std::string message;
 
         {
             std::unique_lock<std::mutex> lock(_queueMutex);
-            _condition.wait(lock, [this] {
+            _condition.wait(lock, [this]
+                {
                 return !_messageQueue.empty() || _stopWorker;
                 });
 
             // Exit immediately if stopWorker is set
-            if (_stopWorker) {
+            if (_stopWorker)
+            {
                 // Clear the queue
                 std::queue<std::string> emptyQueue;
                 std::swap(_messageQueue, emptyQueue);
@@ -89,7 +97,8 @@ void WebhookMgr::SendDiscordWebhook(const std::string& rawMessage)
         }
 
         size_t apiStart = _webhookUrl.find("/api/webhooks");
-        if (apiStart == std::string::npos) {
+        if (apiStart == std::string::npos)
+        {
             throw std::runtime_error("Invalid Discord webhook URL");
         }
         const std::string apiPath = _webhookUrl.substr(apiStart);
@@ -134,18 +143,22 @@ void WebhookMgr::SendDiscordWebhook(const std::string& rawMessage)
         response_stream >> http_version >> status_code;
         std::getline(response_stream, status_message);
 
-        if (status_code == 204) {
+        if (status_code == 204)
+        {
             std::cout << "Webhook sent successfully!" << std::endl;
         }
-        else {
+        else
+        {
             std::ostringstream ss;
             ss << "Failed to send webhook.HTTP Status : " << status_code << " " << status_message << std::endl;
             LOG_ERROR("server.loading", ss.str());
-            std::cerr << "Failed to send webhook. HTTP Status: " << status_code << " " << status_message << std::endl;
         }
     }
-    catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+    catch (const std::exception& e)
+    {
+        std::ostringstream ss;
+        ss << "Error: " << e.what() << std::endl;
+        LOG_ERROR("server.loading", ss.str());
     }
 }
 

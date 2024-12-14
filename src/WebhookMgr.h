@@ -17,7 +17,6 @@ private:
     void ProcessMessages();
     void SendDiscordWebhook(const std::string& message);
 
-
 public:
     static WebhookMgr* instance();
     ~WebhookMgr();
@@ -25,7 +24,6 @@ public:
     void SetWebhookUrl(std::string& url);
     void Start();
     void Stop();
-    
 };
 
 #define sWebhookMgr WebhookMgr::instance()
