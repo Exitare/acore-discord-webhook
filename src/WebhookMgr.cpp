@@ -91,13 +91,16 @@ void WebhookMgr::SendDiscordWebhook(const std::string& rawMessage)
         if (std::empty(_webhookUrl))
         {
             LOG_ERROR("server.loading", "The webhook url is empty. Please provide one.");
+            Stop();
             return;
         }
 
         size_t apiStart = _webhookUrl.find("/api/webhooks");
         if (apiStart == std::string::npos)
         {
-            throw std::runtime_error("Invalid Discord webhook URL");
+            LOG_ERROR("server.worldserver", "Invalid webhook url provided. Stopping module.");
+            Stop();
+            return;
         }
         const std::string apiPath = _webhookUrl.substr(apiStart);
 
@@ -141,22 +144,18 @@ void WebhookMgr::SendDiscordWebhook(const std::string& rawMessage)
         response_stream >> http_version >> status_code;
         std::getline(response_stream, status_message);
 
-        if (status_code == 204)
-        {
-            std::cout << "Webhook sent successfully!" << std::endl;
-        }
-        else
+        if(status_code != 204)
         {
             std::ostringstream ss;
             ss << "Failed to send webhook.HTTP Status : " << status_code << " " << status_message << std::endl;
-            LOG_ERROR("server.loading", ss.str());
+            LOG_ERROR("server.worldserver", ss.str());
         }
     }
     catch (const std::exception& e)
     {
         std::ostringstream ss;
         ss << "Error: " << e.what() << std::endl;
-        LOG_ERROR("server.loading", ss.str());
+        LOG_ERROR("server.worldserver", ss.str());
     }
 }
 
